@@ -122,9 +122,6 @@ sub incoming {
         $self->_active_commands->{$command_name} = $command;
     }
 
-    # XXX: commands need to be able to print stuff on their own too
-    #$command->say_cb($args{say_cb});
-
     if (!$self->_active_commands->{$command_name}->is_active
      && (!defined($action) || $action !~ /^-/)) {
         $self->say($command->init($sender)) if $command->can('init');
@@ -152,9 +149,6 @@ sub incoming {
         }
     }
     else {
-        # XXX: need better handling for "0", but B::BB doesn't currently
-        # handle that properly either, so
-        # also, this should probably be factored into $say, i think?
         $self->say($command->default($sender, $action));
     }
 
