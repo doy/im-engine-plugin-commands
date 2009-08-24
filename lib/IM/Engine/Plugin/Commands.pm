@@ -139,7 +139,7 @@ sub incoming {
                 return;
             }
             my $body = $method_meta->execute($command, $arg,
-                                             {player => $sender});
+                                             {sender => $sender});
             my @extra_args = $method_meta->meta->does_role('IM::Engine::Plugin::Commands::Trait::Method::Formatted') ? (formatter => $method_meta->formatter) : ();
             $self->say($body, @extra_args);
         }
