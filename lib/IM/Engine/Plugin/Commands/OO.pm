@@ -63,7 +63,12 @@ sub init_meta {
             ['IM::Engine::Plugin::Commands::Trait::Class::Command',
              'IM::Engine::Plugin::Commands::Trait::Class::Formatted'],
     );
-    return $options{for_class}->meta;
+    my $meta = Class::MOP::class_of($options{for_class});
+    my @supers = $meta->superclasses;
+    $meta->superclasses('IM::Engine::Plugin::Commands::Command')
+        if @supers == 1 && $supers[0] eq 'Moose::Object'
+        && $options{for_class} ne 'IM::Engine::Plugin::Commands::Command';
+    return $meta;
 }
 
 1;
