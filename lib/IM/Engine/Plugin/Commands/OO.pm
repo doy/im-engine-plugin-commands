@@ -1,7 +1,6 @@
 package IM::Engine::Plugin::Commands::OO;
 use Moose ();
 use Moose::Exporter;
-use Moose::Util::MetaRole;
 use Scalar::Util qw(blessed reftype);
 
 sub command {
@@ -44,31 +43,25 @@ sub command {
     }
 }
 
-Moose::Exporter->setup_import_methods(
+my ($import, $unimport, $init_meta) = Moose::Exporter->setup_import_methods(
     with_caller => ['command'],
     also        => ['Moose'],
+    install     => [qw(import unimport)],
+    attribute_metaclass_roles =>
+        ['IM::Engine::Plugin::Commands::Trait::Attribute::Command',
+         'IM::Engine::Plugin::Commands::Trait::Attribute::Formatted'],
+    metaclass_roles =>
+        ['IM::Engine::Plugin::Commands::Trait::Class::Command',
+         'IM::Engine::Plugin::Commands::Trait::Class::Formatted'],
 );
 
 sub init_meta {
-    shift;
-    my %options = @_;
+    my ($package, %options) = @_;
     Moose->init_meta(%options);
-    Moose::Util::MetaRole::apply_metaclass_roles(
-        for_class =>
-            $options{for_class},
-        attribute_metaclass_roles =>
-            ['IM::Engine::Plugin::Commands::Trait::Attribute::Command',
-             'IM::Engine::Plugin::Commands::Trait::Attribute::Formatted'],
-        metaclass_roles =>
-            ['IM::Engine::Plugin::Commands::Trait::Class::Command',
-             'IM::Engine::Plugin::Commands::Trait::Class::Formatted'],
-    );
-    my $meta = Class::MOP::class_of($options{for_class});
-    my @supers = $meta->superclasses;
-    $meta->superclasses('IM::Engine::Plugin::Commands::Command')
-        if @supers == 1 && $supers[0] eq 'Moose::Object'
-        && $options{for_class} ne 'IM::Engine::Plugin::Commands::Command';
-    return $meta;
+    Class::MOP::class_of($options{for_class})->superclasses(
+        'IM::Engine::Plugin::Commands::Command'
+    ) if $options{for_class} ne 'IM::Engine::Plugin::Commands::Command';
+    goto $init_meta;
 }
 
 1;
