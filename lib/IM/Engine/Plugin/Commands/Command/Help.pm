@@ -10,8 +10,9 @@ sub default {
     my ($sender, $action) = @_;
     $self->is_active(0);
     my $prefix = $self->_ime_plugin->prefix;
-    my $message = IM::Engine::Incoming->new(
-        sender  => $self->_ime_plugin->_last_message->sender,
+    my $last_message = $self->_ime_plugin->_last_message;
+    my $message = $last_message->meta->clone_object(
+        $last_message,
         message => "${prefix}$action -help",
     );
     return $self->_ime_plugin->incoming($message);
