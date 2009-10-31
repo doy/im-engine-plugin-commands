@@ -14,7 +14,7 @@ has formatter => (
 sub _munge_formatter {
     my $self = shift;
     my ($format) = @_;
-    return $format if reftype($format) eq 'CODE';
+    return $format if defined(reftype($format)) && reftype($format) eq 'CODE';
     return $self->associated_metaclass->formatter_for($format);
 }
 
