@@ -55,19 +55,28 @@ has prefix => (
     default => '!',
 );
 
-# XXX: use mxah here
 has alias => (
+    traits  => [qw(Hash)],
     is      => 'ro',
     isa     => 'HashRef[Str]',
     default => sub { {} },
+    handles => {
+        alias_for => 'get',
+        has_alias => 'exists',
+    },
 );
 
-# XXX: and here
 has _active_commands => (
+    traits   => [qw(Hash)],
     is       => 'ro',
     isa      => 'HashRef[IM::Engine::Plugin::Commands::Command]',
     init_arg => undef,
     default  => sub { {} },
+    handles  => {
+        _get_active_command    => 'get',
+        _set_active_command    => 'set',
+        _remove_active_command => 'delete',
+    },
 );
 
 has _last_message => (
@@ -100,7 +109,7 @@ sub incoming {
     $command_name = $self->_find_command($command_name);
     return unless $command_name;
 
-    my $command = $self->_active_commands->{$command_name};
+    my $command = $self->_get_active_command($command_name);
     if (!defined $command) {
         my $command_package = $self->_command_package($command_name);
         return unless try {
@@ -112,12 +121,11 @@ sub incoming {
             return;
         };
         $command = $command_package->new(_ime_plugin => $self);
-        $self->_active_commands->{$command_name} = $command;
+        $self->_set_active_command($command_name, $command);
     }
 
-    if (!$self->_active_commands->{$command_name}->is_active
-     && (!defined($action) || $action !~ /^-/)) {
-        $self->_active_commands->{$command_name}->is_active(1);
+    if (!$command->is_active && (!defined($action) || $action !~ /^-/)) {
+        $command->is_active(1);
         $self->say($command->init($sender)) if $command->can('init');
     }
 
@@ -126,8 +134,7 @@ sub incoming {
     if ($action =~ /^-(\w+)\s*(.*)/) {
         my ($action, $arg) = ($1, $2);
         if (my $method_meta = $command->meta->get_command($action)) {
-            if ($method_meta->needs_init
-             && !$self->_active_commands->{$command_name}->is_active) {
+            if ($method_meta->needs_init && !$command->is_active) {
                 $self->say("$command_name isn't active yet!");
                 return;
             }
@@ -146,9 +153,7 @@ sub incoming {
         $self->say($output) if defined $output;
     }
 
-    if (!$command->is_active) {
-        delete $self->_active_commands->{$command_name};
-    }
+    $self->_remove_active_command($command_name) if !$command->is_active;
 
     return;
 }
@@ -191,9 +196,9 @@ sub _find_command {
     my $self = shift;
     my ($abbrev) = @_;
     return $abbrev if $self->is_command($abbrev);
-    return $self->alias->{$abbrev}
-        if exists $self->alias->{$abbrev}
-        && $self->is_command($self->alias->{$abbrev});
+    return $self->alias_for($abbrev)
+        if $self->has_alias($abbrev)
+        && $self->is_command($self->alias_for($abbrev));
     my @possibilities = grep { /^\Q$abbrev/ } $self->command_list;
     return $possibilities[0] if @possibilities == 1;
     return;
