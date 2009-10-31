@@ -1,6 +1,10 @@
 package IM::Engine::Plugin::Commands::Command::Help;
 use IM::Engine::Plugin::Commands::OO;
 
+has '+help' => (
+    default => 'Displays the help text for the given command',
+);
+
 sub default {
     my $self = shift;
     my ($sender, $action) = @_;
