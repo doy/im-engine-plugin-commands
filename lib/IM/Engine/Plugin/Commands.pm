@@ -1,6 +1,7 @@
 package IM::Engine::Plugin::Commands;
 use Moose;
 use Module::Pluggable sub_name => 'commands';
+Sub::Name::subname('commands', \&commands);
 use List::Util qw(first);
 extends 'IM::Engine::Plugin';
 
@@ -95,11 +96,6 @@ sub incoming {
     return unless $text =~ /^\Q$prefix\E(\w+)(?:\s+(.*))?/;
     my ($command_name, $action) = (lc($1), $2);
 
-    if ($command_name eq 'cmdlist') { # XXX: make this configurable
-        $self->say(join ' ', map { $self->prefix . $_} $self->command_list);
-        return;
-    }
-
     if ($command_name eq 'help') {
         $command_name = $action;
         $command_name =~ s/^-//;
@@ -124,8 +120,8 @@ sub incoming {
 
     if (!$self->_active_commands->{$command_name}->is_active
      && (!defined($action) || $action !~ /^-/)) {
-        $self->say($command->init($sender)) if $command->can('init');
         $self->_active_commands->{$command_name}->is_active(1);
+        $self->say($command->init($sender)) if $command->can('init');
     }
 
     return unless defined $action;
@@ -166,10 +162,15 @@ sub say {
     $self->engine->send_message($self->_last_message->reply($message));
 }
 
+around commands => sub {
+    my $orig = shift;
+    my $self = shift;
+    return ($self->$orig(@_), 'IM::Engine::Plugin::Commands::Command::Cmdlist');
+};
+
 sub command_list {
     my $self = shift;
-    my $namespace = $self->namespace;
-    return sort map { s/\Q${namespace}:://; lc } $self->commands;
+    return sort map { s/.*:://; lc } $self->commands;
 }
 
 sub is_command {
