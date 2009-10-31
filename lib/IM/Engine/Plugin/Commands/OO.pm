@@ -7,7 +7,7 @@ sub command {
     my $caller = shift;
     my $name = shift;
     my $code;
-    $code = shift if reftype($_[0]) eq 'CODE';
+    $code = shift if defined(reftype($_[0])) && reftype($_[0]) eq 'CODE';
     my %args = @_;
 
     my $method_meta = $caller->meta->get_method($name);
