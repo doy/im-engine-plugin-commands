@@ -13,7 +13,8 @@ sub default {
     my $last_message = $self->_ime_plugin->_last_message;
     my $message = $last_message->meta->clone_object(
         $last_message,
-        message => "${prefix}$action -help",
+        message   => "${prefix}$action -help",
+        plaintext => "${prefix}$action -help",
     );
     return $self->_ime_plugin->incoming($message);
 }
