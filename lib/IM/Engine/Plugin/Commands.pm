@@ -96,12 +96,6 @@ sub incoming {
     return unless $text =~ /^\Q$prefix\E(\w+)(?:\s+(.*))?/;
     my ($command_name, $action) = (lc($1), $2);
 
-    if ($command_name eq 'help') {
-        $command_name = $action;
-        $command_name =~ s/^-//;
-        $action = '-help';
-    }
-
     $command_name = $self->_find_command($command_name);
     return unless $command_name;
 
@@ -145,7 +139,8 @@ sub incoming {
         }
     }
     else {
-        $self->say($command->default($sender, $action));
+        my $output = $command->default($sender, $action);
+        $self->say($output) if defined $output;
     }
 
     if (!$command->is_active) {
@@ -165,7 +160,11 @@ sub say {
 around commands => sub {
     my $orig = shift;
     my $self = shift;
-    return ($self->$orig(@_), 'IM::Engine::Plugin::Commands::Command::Cmdlist');
+    return (
+        $self->$orig(@_),
+        'IM::Engine::Plugin::Commands::Command::Cmdlist',
+        'IM::Engine::Plugin::Commands::Command::Help',
+    );
 };
 
 sub command_list {
