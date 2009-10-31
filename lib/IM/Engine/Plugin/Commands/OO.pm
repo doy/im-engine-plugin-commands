@@ -43,7 +43,7 @@ sub command {
     }
 }
 
-my ($import, $unimport, $init_meta) = Moose::Exporter->setup_import_methods(
+my ($import, $unimport, $init_meta) = Moose::Exporter->build_import_methods(
     with_caller => ['command'],
     also        => ['Moose'],
     install     => [qw(import unimport)],
