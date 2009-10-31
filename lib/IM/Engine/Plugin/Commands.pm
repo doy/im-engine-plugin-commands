@@ -3,6 +3,7 @@ use Moose;
 use Module::Pluggable sub_name => 'commands';
 Sub::Name::subname('commands', \&commands);
 use List::Util qw(first);
+use Try::Tiny;
 extends 'IM::Engine::Plugin';
 
 =head1 NAME
@@ -102,12 +103,14 @@ sub incoming {
     my $command = $self->_active_commands->{$command_name};
     if (!defined $command) {
         my $command_package = $self->_command_package($command_name);
-        eval { Class::MOP::load_class($command_package) };
-        if ($@) {
-            warn $@;
-            $self->say((split /\n/, $@)[0]);
-            return;
+        return unless try {
+            Class::MOP::load_class($command_package)
         }
+        catch {
+            warn $_;
+            $self->say((split /\n/)[0]);
+            return;
+        };
         $command = $command_package->new(_ime_plugin => $self);
         $self->_active_commands->{$command_name} = $command;
     }
