@@ -21,6 +21,7 @@ has _ime_plugin => (
     isa      => 'IM::Engine::Plugin',
     required => 1,
     weak_ref => 1,
+    handles  => ['say'],
 );
 
 sub default {
@@ -41,11 +42,6 @@ command cmdlist => sub {
        my $list = shift;
        return join ' ', sort map { '-' . $_ } @$list
    };
-
-sub say {
-    my $self = shift;
-    $self->_ime_plugin->say(@_);
-}
 
 __PACKAGE__->meta->make_immutable;
 no IM::Engine::Plugin::Commands::OO;
