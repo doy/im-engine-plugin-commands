@@ -58,7 +58,8 @@ my ($import, $unimport, $init_meta) = Moose::Exporter->build_import_methods(
 sub init_meta {
     my ($package, %options) = @_;
     $options{base_class} = 'IM::Engine::Plugin::Commands::Command'
-        if $options{for_class} ne 'IM::Engine::Plugin::Commands::Command';
+        if !exists $options{base_class}
+        && $options{for_class} ne 'IM::Engine::Plugin::Commands::Command';
     Moose->init_meta(%options);
     goto $init_meta;
 }
