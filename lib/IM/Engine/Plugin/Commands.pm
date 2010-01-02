@@ -177,7 +177,7 @@ around commands => sub {
 
 sub command_list {
     my $self = shift;
-    return sort map { s/.*:://; lc } $self->commands;
+    return (sort map { (my $cmd = $_) =~ s/.*:://; lc($cmd) } $self->commands);
 }
 
 sub is_command {
